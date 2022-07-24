@@ -13,57 +13,93 @@ con.connect((err) => {
   }
 });
 
-  con.promise().query('SELECT * FROM movies')
- .then(([rows,fields]) => {
-  app.get('/api/movies', (req, res) => {
-    if (res) {
-      res.status(200).json(rows);
+app.get("/api/movies", (req, res) => {
+  connection.query("SELECT * FROM movies", (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Error retrieving data from database");
+    } else {
+      res.json(result);
     }
-  })
- }).catch((err) => {
-     console.warn('error in the request');
- });
+  });
+});
 
-  app.post('/api/movies', (req, res) => {
-    const { title, director, year, color, duration } = req.body;
-    con.query(
-      'INSERT INTO movies(title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)',
-      [title, director, year, color, duration],
-      (err, result) => {
-        if (err) {
-          res.status(500).send('Error saving the movie');
-        } else {
-          res.status(200).send('Movie successfully saved');
-        }
+app.get("/api/users", (req, res) => {
+  connection.query("SELECT * FROM users", (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Error retrieving users from database");
+    } else {
+      res.json(result);
+    }
+  });
+});
+
+app.post("/api/movies", (req, res) => {
+  const { title, director, year, color, duration } = req.body;
+  connection.query(
+    "INSERT INTO movies (title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
+    [title, director, year, color, duration],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Error saving the movie");
+      } else {
+        res.status(200).send("Movie successfully saved");
       }
-    );
-  });
+    }
+  );
+});
 
-  con.promise().query('SELECT * FROM users')
-  .then(([rows,fields]) => {
-   app.get('/api/users', (req, res) => {
-     if (res) {
-       res.status(200).json(rows);
-     }
-   })
-  }).catch((err) => {
-      console.warn('error in the request');
-  });
-
-  app.post('/api/users', (req, res) => {
-    const { firstname, lastname, email } = req.body;
-    con.query(
-      'INSERT INTO users(firstname, lastname, email) VALUES (?, ?, ?)',
-      [firstname, lastname, email],
-      (err, result) => {
-        if (err) {
-          res.status(500).send('Error saving the user');
-        } else {
-          res.status(200).send('User successfully saved');
-        }
+app.post("/api/users", (req, res) => {
+  const { firstname, lastname, email } = req.body;
+  connection.query(
+    "INSERT INTO users (firstname, lastname, email) VALUES (?, ?, ?)",
+    [firstname, lastname, email],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Error saving the user");
+      } else {
+        res.status(200).send("User successfully saved");
       }
-    );
-  });
+    }
+  );
+});
+
+app.put('/api/users/:userId', (req, res) => {
+  const { userId } = req.params;
+  const userPropsToUpdate = req.body;
+  con.query(
+    'UPDATE users SET ? WHERE id = ?',
+    [userPropsToUpdate, userId],
+    (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('Error updating a user');
+      } else {
+        res.status(200).send('User updated successfully 🎉');
+      }
+    }
+  );
+});
+
+app.put('/api/movies/:moviesId', (req, res) => {
+  const { moviesId } = req.params;
+  const moviePropsToUpdate = req.body;
+  con.query(
+    'UPDATE movies SET ? WHERE id = ?',
+    [moviePropsToUpdate, moviesId],
+    (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('Error updating a user');
+      } else {
+        res.status(200).send('User updated successfully 🎉');
+      }
+    }
+  );
+});
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
