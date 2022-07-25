@@ -14,7 +14,7 @@ con.connect((err) => {
 });
 
 app.get("/api/movies", (req, res) => {
-  connection.query("SELECT * FROM movies", (err, result) => {
+  con.query("SELECT * FROM movies", (err, result) => {
     if (err) {
       console.error(err);
       res.status(500).send("Error retrieving data from database");
@@ -25,7 +25,7 @@ app.get("/api/movies", (req, res) => {
 });
 
 app.get("/api/users", (req, res) => {
-  connection.query("SELECT * FROM users", (err, result) => {
+  con.query("SELECT * FROM users", (err, result) => {
     if (err) {
       console.error(err);
       res.status(500).send("Error retrieving users from database");
@@ -37,7 +37,7 @@ app.get("/api/users", (req, res) => {
 
 app.post("/api/movies", (req, res) => {
   const { title, director, year, color, duration } = req.body;
-  connection.query(
+  con.query(
     "INSERT INTO movies (title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
     [title, director, year, color, duration],
     (err, result) => {
@@ -53,7 +53,7 @@ app.post("/api/movies", (req, res) => {
 
 app.post("/api/users", (req, res) => {
   const { firstname, lastname, email } = req.body;
-  connection.query(
+  con.query(
     "INSERT INTO users (firstname, lastname, email) VALUES (?, ?, ?)",
     [firstname, lastname, email],
     (err, result) => {
@@ -96,6 +96,38 @@ app.put('/api/movies/:moviesId', (req, res) => {
         res.status(500).send('Error updating a user');
       } else {
         res.status(200).send('User updated successfully 🎉');
+      }
+    }
+  );
+});
+
+app.delete('/api/users/:id', (req, res) => {
+  const userId = req.params.id;
+  con.query(
+    'DELETE FROM users WHERE id = ?',
+    [userId],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('😱 Error deleting an user');
+      } else {
+        res.sendStatus(204);
+      }
+    }
+  );
+});
+
+app.delete('/api/movies/:moviesId', (req, res) => {
+  const moviesId = req.params.moviesId;
+  con.query(
+    'DELETE FROM movies WHERE id = ?',
+    [moviesId],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('😱 Error deleting an user');
+      } else {
+        res.status(204).send('Film supprimé !');
       }
     }
   );
