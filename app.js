@@ -92,7 +92,9 @@ app.post("/api/movies", (req, res) => {
         console.error(err);
         res.status(500).send("Error saving the movie");
       } else {
-        res.status(200).send("Movie successfully saved");
+        const id = result.insertId;
+        const createdMovie = { id, title, director, year, color, duration };
+        res.status(201).json(createdMovie);
       }
     }
   );
@@ -108,24 +110,28 @@ app.post("/api/users", (req, res) => {
         console.error(err);
         res.status(500).send("Error saving the user");
       } else {
-        res.status(200).send("User successfully saved");
+        const id = result.insertId;
+        const createdUser = { id, firstname, lastname, email };
+        res.status(201).json(createdUser);
       }
     }
   );
 });
 
-app.put("/api/users/:userId", (req, res) => {
-  const { userId } = req.params;
+app.put("/api/users/:id", (req, res) => {
+  const userId = req.params.id;
   const userPropsToUpdate = req.body;
   con.query(
     "UPDATE users SET ? WHERE id = ?",
     [userPropsToUpdate, userId],
-    (err) => {
+    (err, result) => {
       if (err) {
         console.log(err);
         res.status(500).send("Error updating a user");
+      } else if (result.affectedRows === 0) {
+        res.status(404).send(`User with id ${userId} not found.`);
       } else {
-        res.status(200).send("User updated successfully 🎉");
+        res.sendStatus(204);
       }
     }
   );
@@ -137,12 +143,14 @@ app.put("/api/movies/:moviesId", (req, res) => {
   con.query(
     "UPDATE movies SET ? WHERE id = ?",
     [moviePropsToUpdate, moviesId],
-    (err) => {
+    (err, result) => {
       if (err) {
         console.log(err);
         res.status(500).send("Error updating a user");
+      } else if (result.affectedRows === 0) {
+        res.status(404).send(`Movie with id ${moviesId} not found.`);
       } else {
-        res.status(200).send("User updated successfully 🎉");
+        res.sendStatus(204);
       }
     }
   );
