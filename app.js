@@ -1,4 +1,5 @@
 const con = require("./db-config");
+const Joi = require("joi");
 const express = require("express");
 const app = express();
 app.use(express.json());
@@ -101,21 +102,42 @@ app.post("/api/movies", (req, res) => {
 });
 
 app.post("/api/users", (req, res) => {
-  const { firstname, lastname, email } = req.body;
-  con.query(
-    "INSERT INTO users (firstname, lastname, email) VALUES (?, ?, ?)",
-    [firstname, lastname, email],
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        res.status(500).send("Error saving the user");
-      } else {
-        const id = result.insertId;
-        const createdUser = { id, firstname, lastname, email };
-        res.status(201).json(createdUser);
-      }
-    }
+  const { firstname, lastname, email, city, language } = req.body;
+  const { error } = Joi.object({
+    email: Joi.string().email().max(255).required(),
+    firstname: Joi.string().max(255).required(),
+    lastname: Joi.string().max(255).required(),
+    city: Joi.string().max(255).required(),
+    language: Joi.string().max(255).required(),
+  }).validate(
+    { firstname, lastname, email, city, language },
+    { abortEarly: false }
   );
+
+  if (error) {
+    res.status(422).json({ validationErrors: error.details });
+  } else {
+    con.query(
+      "INSERT INTO users (firstname, lastname, email, city, language) VALUES (?, ?, ?, ?, ?)",
+      [firstname, lastname, email, city, language],
+      (err, result) => {
+        if (err.code === "ER_DUP_ENTRY") {
+          res.status(409).send("email déjà utilisé");
+        } else {
+          const id = result.insertId;
+          const createdUser = {
+            id,
+            firstname,
+            lastname,
+            email,
+            city,
+            language,
+          };
+          res.status(201).json(createdUser);
+        }
+      }
+    );
+  }
 });
 
 app.put("/api/users/:id", (req, res) => {
@@ -163,7 +185,7 @@ app.delete("/api/users/:id", (req, res) => {
       console.log(err);
       res.status(500).send("😱 Error deleting an user");
     } else {
-      res.sendStatus(204);
+      res.status(204).send("user supprimé !");
     }
   });
 });
