@@ -239,7 +239,7 @@ app.delete("/api/movies/:moviesId", (req, res) => {
       console.log(err);
       res.status(500).send("😱 Error deleting an user");
     } else {
-      res.status(204).send("Film supprimé !");
+      res.status(204).send("Film supprimé avec succès!");
     }
   });
 });
