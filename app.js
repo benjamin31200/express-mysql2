@@ -85,20 +85,34 @@ app.get("/api/users/:userId", (req, res) => {
 
 app.post("/api/movies", (req, res) => {
   const { title, director, year, color, duration } = req.body;
-  con.query(
-    "INSERT INTO movies (title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
-    [title, director, year, color, duration],
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        res.status(500).send("Error saving the movie");
-      } else {
-        const id = result.insertId;
-        const createdMovie = { id, title, director, year, color, duration };
-        res.status(201).json(createdMovie);
-      }
-    }
+  const { error } = Joi.object({
+    title: Joi.string().max(255).required(),
+    director: Joi.string().max(255),
+    year: Joi.number().integer().min(1888),
+    color: Joi.bool(),
+    duration: Joi.number().positive(),
+  }).validate(
+    { title, director, year, color, duration },
+    { abortEarly: false }
   );
+  if (error) {
+    res.status(422).json({ validationErrors: error.details });
+  } else {
+    con.query(
+      "INSERT INTO movies (title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
+      [title, director, year, color, duration],
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send("Error saving the movie");
+        } else {
+          const id = result.insertId;
+          const createdMovie = { id, title, director, year, color, duration };
+          res.status(201).json(createdMovie);
+        }
+      }
+    );
+  }
 });
 
 app.post("/api/users", (req, res) => {
@@ -122,7 +136,7 @@ app.post("/api/users", (req, res) => {
       [firstname, lastname, email, city, language],
       (err, result) => {
         if (err.code === "ER_DUP_ENTRY") {
-          res.status(409).send("email déjà utilisé");
+          res.status(409).json("email déjà utilisé");
         } else {
           const id = result.insertId;
           const createdUser = {
@@ -143,39 +157,67 @@ app.post("/api/users", (req, res) => {
 app.put("/api/users/:id", (req, res) => {
   const userId = req.params.id;
   const userPropsToUpdate = req.body;
-  con.query(
-    "UPDATE users SET ? WHERE id = ?",
-    [userPropsToUpdate, userId],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send("Error updating a user");
-      } else if (result.affectedRows === 0) {
-        res.status(404).send(`User with id ${userId} not found.`);
-      } else {
-        res.sendStatus(204);
-      }
-    }
+  const { firstname, lastname, email, city, language } = req.body;
+  const { error } = Joi.object({
+    email: Joi.string().email().max(255).optional(),
+    firstname: Joi.string().max(255).optional(),
+    lastname: Joi.string().max(255).optional(),
+    city: Joi.string().max(255).optional(),
+    language: Joi.string().max(255).optional(),
+  }).validate(
+    { firstname, lastname, email, city, language },
+    { abortEarly: false }
   );
+  if (error) {
+    res.status(422).json({ validationErrors: error.details });
+  } else
+    con.query(
+      "UPDATE users SET ? WHERE id = ?",
+      [userPropsToUpdate, userId],
+      (err, result) => {
+        if (err) {
+          console.log(err);
+          res.status(500).send("Error updating a user");
+        } else if (result.affectedRows === 0) {
+          res.status(404).send(`User with id ${userId} not found.`);
+        } else {
+          res.sendStatus(204);
+        }
+      }
+    );
 });
 
 app.put("/api/movies/:moviesId", (req, res) => {
   const { moviesId } = req.params;
   const moviePropsToUpdate = req.body;
-  con.query(
-    "UPDATE movies SET ? WHERE id = ?",
-    [moviePropsToUpdate, moviesId],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send("Error updating a user");
-      } else if (result.affectedRows === 0) {
-        res.status(404).send(`Movie with id ${moviesId} not found.`);
-      } else {
-        res.sendStatus(204);
-      }
-    }
+  const { error } = Joi.object({
+    title: Joi.string().max(255).optional(),
+    director: Joi.string().max(255).optional(),
+    year: Joi.number().integer().min(1888).optional(),
+    color: Joi.boolean().optional(),
+    duration: Joi.number().positive().optional(),
+  }).validate(
+    { title, director, year, colorcolor, duration },
+    { abortEarly: false }
   );
+  if (error) {
+    res.status(422).json({ validationErrors: error.details });
+  } else {
+    con.query(
+      "UPDATE movies SET ? WHERE id = ?",
+      [moviePropsToUpdate, moviesId],
+      (err, result) => {
+        if (err) {
+          console.log(err);
+          res.status(500).send("Error updating a user");
+        } else if (result.affectedRows === 0) {
+          res.status(404).send(`Movie with id ${moviesId} not found.`);
+        } else {
+          res.sendStatus(204);
+        }
+      }
+    );
+  }
 });
 
 app.delete("/api/users/:id", (req, res) => {
